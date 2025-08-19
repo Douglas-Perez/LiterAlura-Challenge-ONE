@@ -10,6 +10,9 @@ import com.perez.LiterAlura.service.ConverteDados;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 @Component
@@ -86,9 +89,23 @@ public class Principal {
 
     private void listarAutores() {
         var autores = autorRepo.findAll();
-        autores.forEach(a -> {
+        Map<String, Autor> autoresUnicos = new LinkedHashMap<>();
+        for (Autor a : autores) {
+            String chave = a.getNome() + "-" + a.getAnoNascimento() + "-" + a.getAnoFalecimento();
+            autoresUnicos.computeIfAbsent(chave, k -> a)
+                    .getLivros().addAll(a.getLivros());
+        }
+        autoresUnicos.values().forEach(a -> {
             System.out.println(a);
-            a.getLivros().forEach(l -> System.out.println("   - " + l.getTitulo()));
+            List<String> titulos = a.getLivros().stream()
+                    .map(Livro::getTitulo)
+                    .distinct()
+                    .toList();
+            if (titulos.isEmpty()) {
+                System.out.println("   - Nenhum livro encontrado");
+            } else {
+                titulos.forEach(t -> System.out.println("   - " + t));
+            }
         });
     }
 
